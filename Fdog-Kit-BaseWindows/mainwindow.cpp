@@ -28,7 +28,9 @@
 #include <QFile>
 #include <QListView>
 #include <QFormLayout>
-#include <QDesktopWidget>
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#   include <QDesktopWidget>
+#endif
 #include "windows.h"
 #include "windowsx.h"
 MainWindow::MainWindow(QWidget *parent) :
@@ -41,8 +43,10 @@ MainWindow::MainWindow(QWidget *parent) :
     // QMainWindow透明显示，当设置主显示窗口的外边距时，防止外边距显示出来。
     this->setAttribute(Qt::WA_TranslucentBackground, true);
 
-    setContentsMargins(10, 10, 10, 10);
-    ui->toolButton_max->setIcon(QIcon(":lib/Icon_max4.png"));
+    int margin = ui->widget_title->height();
+
+    setContentsMargins(margin, margin, margin, margin);
+    ui->toolButton_max->setIcon(QIcon(":/lib/Icon_max4.png"));
 
     //设置阴影效果
     defaultShadow = new QGraphicsDropShadowEffect();
@@ -304,7 +308,11 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     if(ui->widget_title->underMouse() && !showFlag) {
         isPressedWidget = true; // 当前鼠标按下的即是QWidget而非界面上布局的其它控件
     }
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    last = event->globalPosition().toPoint();
+#else
     last = event->globalPos();
+#endif
     // 当前鼠标进入了以上指定的8个区域，并且是左键按下时才开始进行窗口拉伸;
      if (m_stretchRectState != NO_SELECT && event->button() == Qt::LeftButton)
      {
@@ -318,9 +326,15 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
     if (isPressedWidget) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        int dx = event->globalPosition().x() - last.x();
+        int dy = event->globalPosition().y() - last.y();
+        last = event->globalPosition().toPoint();
+#else
         int dx = event->globalX() - last.x();
         int dy = event->globalY() - last.y();
         last = event->globalPos();
+#endif
         move(x()+dx, y()+dy);
     }
 
@@ -395,7 +409,7 @@ void MainWindow::changeEvent(QEvent *event)
                                                         background-color: rgb(200, 0, 0);\
                                                         border: none;\
                                                     }");
-                ui->toolButton_max->setIcon(QIcon(":lib/Icon_max4.png"));
+                ui->toolButton_max->setIcon(QIcon(":/lib/Icon_max4.png"));
             } else if (this->windowState() == Qt::WindowMaximized && stateEvent->oldState() == Qt::WindowNoState) {
                 //qDebug() << "当前最大化";
                 ui->centralWidget->setStyleSheet("#centralWidget {background-color: rgb(67, 67, 67);border-image: url(:/lib/back1.png);border-radius:0px;}");
@@ -419,13 +433,17 @@ void MainWindow::changeEvent(QEvent *event)
                                                         background-color: rgb(200, 0, 0);\
                                                         border: none;\
                                                     }");
-                ui->toolButton_max->setIcon(QIcon(":lib/icon-copy.png"));
+                ui->toolButton_max->setIcon(QIcon(":/lib/icon-copy.png"));
             }
         }
     }
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
+#else
 bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
+#endif
 {
     MSG* msg = (MSG*)message;
     switch (msg->message) {
@@ -473,7 +491,7 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
 void MainWindow::createSystemTray()
 {
     // 创建系统托盘图标
-    trayIcon = new QSystemTrayIcon(QIcon(":lib/icon9.png"), this);
+    trayIcon = new QSystemTrayIcon(QIcon(":/lib/icon9.png"), this);
     trayIcon->setToolTip("Fdog-Kit");
     trayIcon->show();
 
@@ -542,7 +560,7 @@ void MainWindow::rece_toolButton_fullScreen_sign()
     if (!isFullScreen) {
         setContentsMargins(0, 0, 0, 0);
         ui->centralWidget->setStyleSheet("#centralWidget {border-image: url(:/lib/back1.png);border-radius:0px;}");
-        ui->toolButton_max->setIcon(QIcon(":lib/icon-copy.png"));
+        ui->toolButton_max->setIcon(QIcon(":/lib/icon-copy.png"));
         //this->showNormal();
         ui->toolButton_min->hide();
         ui->toolButton_max->hide();
@@ -555,11 +573,11 @@ void MainWindow::rece_toolButton_fullScreen_sign()
         ui->toolButton_close->show();
         setContentsMargins(10, 10, 10, 10); //rgb(67, 77, 88)
         ui->centralWidget->setStyleSheet("#centralWidget {border-image: url(:/lib/back1.png);border-radius:10px;}");
-        ui->toolButton_max->setIcon(QIcon(":lib/Icon_max4.png"));
+        ui->toolButton_max->setIcon(QIcon(":/lib/Icon_max4.png"));
         if (showFlag) {
             ui->centralWidget->setStyleSheet("#centralWidget {border-image: url(:/lib/back1.png);border-radius:0px;}");
             setContentsMargins(0, 0, 0, 0);
-            ui->toolButton_max->setIcon(QIcon(":lib/icon-copy.png"));
+            ui->toolButton_max->setIcon(QIcon(":/lib/icon-copy.png"));
             this->showMaximized();
         } else {
             this->showNormal();

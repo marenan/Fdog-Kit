@@ -52,7 +52,11 @@ public:
     void mouseDoubleClickEvent(QMouseEvent *event); //鼠标双击
     void showEvent(QShowEvent *event);
     void changeEvent(QEvent *event);
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result);
+#else
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);
+#endif
 
     //创建托盘显示
     void createSystemTray();
